@@ -1,0 +1,66 @@
+"use client"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import GeneralInfoForm from "./forms/generalInfoForm"
+import Breadcrumbs from "./Breadcrumbs";
+import Footer from "./Footer";
+import { steps } from "./steps";
+import { useSearchParams } from "next/navigation";
+// import {ResumeEditorProps} from "@/lib/types"
+import { useState } from "react";
+import { ResumeValues } from "@/lib/validation";
+import { json } from "node:stream/consumers";
+
+interface ResumeEditorProps {
+  resumeToEdit: ResumeServerData | null;
+}
+
+export default function page({ resumeToEdit }: ResumeEditorProps)
+{
+
+    const searchParams = useSearchParams();
+
+    const currentStep = searchParams.get("step") || steps[0].key;
+
+    const [resumeData, setResumeData] = useState<ResumeValues>({});
+
+    function setStep(key: string) {
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.set("step", key);
+        window.history.pushState(null, "", `?${newSearchParams.toString()}`);
+      }
+    
+      const FormComponent = steps.find(
+        (step) => step.key === currentStep,
+      )?.component;
+
+    return <div className="flex flex-col min-h-screen">
+        <header className="text-center px-3, py-5 border-b space-y-1.5">
+            <h1 className="font-bold text-2xl">
+                Design your resume
+            </h1>
+            <p className="text-sm text-muted-foreground">
+                Please follow the below steps to create your resume. Your progress will be saved automatically.
+            </p>
+        </header>
+        <main className="relative grow">
+            <div className="absolute bottom-0 top-0 flex w-full">
+            <div className="w-full md:w-1/2 p-3 space-y-6 overflow-y-auto">
+            <Breadcrumbs currentStep={currentStep} setCurrentStep={setStep} />
+            {FormComponent && (
+              <FormComponent
+                resumeData={resumeData}
+                setResumeData={setResumeData} />)}
+            </div>
+            <div className="grow md:border-r"/>
+            <div className="hidden w-1/2 md:flex">
+                <pre>{JSON.stringify(resumeData, null, 2)}</pre>
+            </div>
+            </div>
+        </main>
+        <Footer
+        currentStep={currentStep}
+        setCurrentStep={setStep}
+      />
+    </div>
+}
